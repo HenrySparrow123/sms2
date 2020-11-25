@@ -1,34 +1,16 @@
 #include "sms.hpp"
 
-
 int Message::cle = 0;
 
-///TELEPHONE///
-
-Telephone::Telephone() : num(""), r(nullptr), nbMess(0)
-{}
-
-Telephone::Telephone(std::string defNum) : num(defNum), r(nullptr), nbMess(0)
-{}
-
-std::string Telephone::getNumero() const
+const char * MauvaisNumero::what() const noexcept
 {
-    return num;
+    return "mauvais numero";
 }
 
-void Telephone::setNumero(std::string defNum)
-{
-    num = defNum;
-}
 
-Reseau * Telephone::getReseau() const
+void Telephone::setNumero(std::string _num)
 {
-    return r;
-}
-
-void Telephone::setReseau(Reseau * reseau)
-{
-    r = reseau;
+    num = _num;
 }
 
 int Telephone::getNbMessages() const
@@ -36,66 +18,114 @@ int Telephone::getNbMessages() const
     return nbMess;
 }
 
-
-const char * MauvaisNumero::what() const noexcept
+    
+std::string Telephone::getNumero() const
 {
-    return "mauvais numero";
+    return num;
 }
 
-///RESEAU///
+Reseau * Telephone::getReseau() const
+{
+    return r;
+}
 
-Reseau::Reseau() : nbTel(0), membres(nullptr)
+void Telephone::setReseau(Reseau * _r)
+{
+    r = _r;
+}
+
+Telephone::Telephone() : num(""), r(nullptr), nbMess(0)
 {}
 
-std::string Reseau::lister() const
+void Telephone::reception()
 {
-    std::ostringstream oss("");
-    
-    for (int i = 0; i<nbTel; i++) 
+    nbMess++;
+}
+
+
+Telephone::Telephone(std::string _num) : num(_num), r(nullptr), nbMess(0)
+{}
+
+void Reseau::ajouter(std::string _num)
+{
+    abonnes.push_back(Telephone(_num));
+    abonnes.at(abonnes.size()-1).setReseau(this);
+}
+
+std::string Reseau::lister()
+{
+    if(abonnes.size() != 0)
     {
-        oss << (membres+i)->getNumero() << "\n";
+        std::stringstream ss;
+        for (std::vector<Telephone>::iterator i = abonnes.begin();i!=abonnes.end(); i++)
+            ss << i->getNumero() << std::endl;
+        return ss.str();
     }
-    return oss.str();
+    else return "";
 }
 
-void Reseau::ajouter(std::string numAAjouter)
+bool Reseau::possede(std::string _num)
 {
-    nbTel ++;
-
-    Telephone * newTab = new Telephone[nbTel];
-    memcpy(newTab, membres, (nbTel-1)*sizeof(Telephone));
-    membres = newTab;
-
-    membres[nbTel-1] = Telephone(numAAjouter);
-    membres[nbTel-1].setReseau(this);
-}
-
-Telephone& Reseau::trouveTel(std::string tel) const
-{
-    int i = 0;
-    bool trouve = false;
-    Telephone& res = new Telephone;
-
-    while ( (i<nbTel) && (!trouve))
+    bool res = false;
+    for (std::vector<Telephone>::iterator i = abonnes.begin();i != abonnes.end();i++)
     {
-        if (membres[i].getNumero() == tel)
-        {
-            res = membres[i];
-            trouve = true;
-        }
-        i++;
+        if (i->getNumero() == _num) res = true;
     }
 
-    if (i >= nbTel) throw std::invalid_argument("Numero existe pas!");
-    else return res; 
+    return res;
 }
 
-///Message///
 
-   
-Message::Message(std::string e,std::string d,std::string dat) : expe(e),dest(d),date(dat), id(cle)
+void Telephone::textoter(std::string _num,std::string _message)
 {
-   cle ++;
+    if (getReseau()->possede(_num))
+    {
+        getReseau()->trouveTel(_num).reception();
+    }
+    reception();
+}
+
+
+Telephone& Reseau::trouveTel(std::string _num)
+{
+    bool in = false;
+    std::vector<Telephone>::iterator i = abonnes.begin();
+
+    while ( (in == false) &&   (i!=abonnes.end()) )
+    {
+        if (i->getNumero() == _num) in = true;
+        else i++;
+    }
+
+    if (in) return *i;
+    else throw MauvaisNumero();
+
+}
+
+MauvaisNumero::MauvaisNumero() : std::invalid_argument("mauvais numero")
+{}
+
+SMS::SMS(std::string _num1, std::string _num2, std::string _num3) : Message(_num1,_num2,_num3)
+{}
+
+void SMS::setTexte(std::string _text)
+{
+    text = _text;
+}
+
+std::string SMS::getTexte() const
+{
+    return text;
+}
+
+std::string SMS::afficher() const
+{
+    return text;
+}
+
+Message::Message(std::string _num1, std::string _num2, std::string _num3) : id(Message::cle)
+{
+    Message::cle ++;
 }
 
 int Message::getCle()
@@ -108,22 +138,46 @@ int Message::getId() const
     return id;
 }
 
-///SMS///
+std::string MMS::getTexte() const
+{
+    return text;
+}
 
-SMS::SMS(std::string e,std::string d,std::string dat) : Message(e,d,dat)
+void MMS::setTexte(std::string _text)
+{
+    text = _text;
+}
+
+MMS::MMS(std::string _num1, std::string _num2, std::string _num3) : Message(_num1,_num2,_num3)
 {}
 
-std::string SMS::afficher() const
+void MMS::joindre(Media* _med)
 {
-    return texte;
+    objets.push_back(_med);
 }
 
-std::string SMS::getTexte() const
+std::string MMS::afficher()
 {
-    return texte;
+    std::stringstream ss;
+    ss << getTexte();
+    for (std::vector<Media *>::iterator i = objets.begin(); i != objets.end(); i++)
+        ss << (*i)->afficher();
+    
+    return ss.str();
 }
 
-void SMS::setTexte(std::string message)
+std::string Video::afficher()
 {
-    texte = message;
+    return "[[video]]";
 }
+
+std::string Son::afficher(){
+    return "[[son]]";
+}
+
+
+std::string Image::afficher(){
+    return "[[image]]";
+}
+
+

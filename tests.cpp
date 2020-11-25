@@ -77,11 +77,11 @@ TEST_CASE("Reseau5") {
   CHECK(strcmp("mauvais numero", e.what()) == 0 );
 }
 
-/*TEST_CASE("Reseau6") {
+TEST_CASE("Reseau6") {
   MON_RESEAU;
 
   CHECK_THROWS_AS("0473405070" == r.trouveTel("0473405070").getNumero(), MauvaisNumero);
-}*/
+}
 
 TEST_CASE("Telephone3") {
  const Telephone t;
@@ -136,13 +136,13 @@ TEST_CASE("SMS2") {
   CHECK(0 ==  a->getNbMessages());
 
     // créer et envoyer un SMS à un numéro de téléphone
-  /*de->textoter("0473407632", "Examen en cours");
+  de->textoter("0473407632", "Examen en cours");
 
   CHECK(1 == de->getNbMessages());
-  CHECK(1 ==  a->getNbMessages());*/
+  CHECK(1 ==  a->getNbMessages());
 }
 
-/*TEST_CASE("SMS3") {
+TEST_CASE("SMS3") {
 	MON_RESEAU;
 
   Telephone * de = & r.trouveTel("0473405042");
